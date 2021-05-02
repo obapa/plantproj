@@ -1,2 +1,7 @@
 core/
 Release/
+.settings/
+.cproject
+.project
+sloeber.ino.cpp
+spec.d
