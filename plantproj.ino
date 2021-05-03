@@ -3,15 +3,11 @@
 #include "etc/extraFunctions.h"
 #include <avr/pgmspace.h>
 
+#include "etc/wifiSetup.h"
 
-#ifndef STASSID
-#define STASSID "paternal"
-#define STAPSK  "al7rog52hd"
-#endif
+//ADC_MODE(ADC_VCC)//todo to read VCC
+//call ESP.getVcc()
 
-IPAddress staticIP(192,168,2,30);
-IPAddress gateway(192,168,2,1);
-IPAddress subnet(255,255,0,0);
 
 const char* root_ca= \
   "-----BEGIN CERTIFICATE REQUEST-----\n" \
@@ -34,9 +30,8 @@ const char* root_ca= \
   "PBA=\n" \
   "-----END CERTIFICATE REQUEST-----\n";
 
+const uint32_t SLEEPTIME = 10e6;
 
-const char wSsid[] = STASSID;
-const char wPass[] = STAPSK;
 const int httpsPort[] PROGMEM = {443};
 
 const char fHost[] PROGMEM = "www.pobanion.com";//instead of pulling from progmem could use macro: f("string")
@@ -47,43 +42,40 @@ const bool debug = true;
 //TODO can add wifimanager library to handle initial wifi config
 
 void setup(){
+	//turn off wifi until we collect data
+	wifiOff();
 
-  if(debug){
-      Serial.begin(74880);
-      Serial.println();
-      //Serial.setDebugOutput(true);
-  }
-  //turn off wifi until we collect data
-  WiFi.mode (WIFI_OFF);
-  WiFi.forceSleepBegin();
-  delay(1);
+	if( debug ){
+		Serial.begin( 74880 );
+		//Serial.setDebugOutput(true);
+		Serial.println( "We are in" );
+	}
 
-  //now turn on wifi
-  WiFi.forceSleepWake();
-  delay(1);
-  WiFi.persistent( false );
-  WiFi.mode( WIFI_STA );
-  WiFi.begin(wSsid, wPass);
-  WiFi.config(staticIP, gateway, subnet);
+	//Now enable wifi to send data
+	wifiOn();
+	wifiConnect();
+	//Save wifi session in RC
+	writeToRtc();
+/*
+	//Already connected to internet
+	char *host = new char[32];
+	rfFlash(fHost, host);
 
-  char *host = new char[32];
-  rfFlash(fHost, host);
+	// WiFi.printDiag(Serial);
+	Serial.print(F("Connecting"));
+	while (WiFi.status() != WL_CONNECTED)
+	{
+		delay(500);
+		Serial.print(".");
+	}
+	Serial.println();
+	Serial.print(F("Connected, IP address: "));
+	Serial.println(WiFi.localIP());
 
- // WiFi.printDiag(Serial);
-  Serial.print(F("Connecting"));
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println();
-  Serial.print(F("Connected, IP address: "));
-  Serial.println(WiFi.localIP());
-
-  // Use WiFiClientSecure class to create TLS connection
-  WiFiClientSecure client;
-  Serial.print(F("connecting to "));
-  Serial.println(host);
+	// Use WiFiClientSecure class to create TLS connection
+	WiFiClientSecure client;
+	Serial.print(F("connecting to "));
+	Serial.println(host);
 //---------------------TODO need to set up sessions for the tcp connection
 /* use
 BearSSL::WiFiClientSecure.setSession(&BearSSLSession)
@@ -93,9 +85,11 @@ for TLS session
 */
  // Serial.printf("Using fingerprint '%s'\n", fFingerprint);
   //client.setCACert(root_ca);//TODO running into issues here, not sure what I am doing with the cert
-  client.setFingerprint(fFingerprint);
+  //TODO enable from here
+	/*client.setFingerprint(fFingerprint);
   if (!client.connect(host, pgm_read_word(httpsPort))) {
     Serial.println(F("connection failed"));
+    ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
     return;
   }
 
@@ -112,7 +106,7 @@ char data[] =  "{\"luminosity\": \"3\", \"temperature\": \"4\"}";
                "pass: afsder\r\n" +
                "Connection: Close\r\n\r\n" "*/
 
-
+/*
   client.print(String("POST ") + url + " HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" +
                "content-type: application/json\r\n" +
@@ -151,7 +145,7 @@ Serial.println(client.readString());//Mess up whenever the page errors. Look lik
 
   WiFi.disconnect( true );
   delay(1);
-  //ESP.deepSleep(5e6, WAKE_RF_DISABLED);//TODO deepsleep
+  ESP.deepSleep( SLEEPTIME, WAKE_RF_DISABLED);//TODO deepsleep
 }
 
 void loop() {

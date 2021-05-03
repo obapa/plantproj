@@ -1,5 +1,9 @@
 #include "extraFunctions.h"
 
+#ifndef STASSID
+#define debug false
+#endif
+
 //for temperature circuit
 #define TEMPR 10000.0
 #define TEMPC1 1.009249522e-03
@@ -56,3 +60,12 @@ float readTemp(int analogPin){
   Serial.printf("Temperature: %f, ", tempBuf);
   Serial.println();
 }
+
+/*
+inline size_t printF(String input){
+	if(debug){
+		return Serial.print(F(input));
+	}
+	return 0;
+}
+*/
