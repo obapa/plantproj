@@ -3,7 +3,12 @@
 #include "etc/extraFunctions.h"
 #include <avr/pgmspace.h>
 
-#include "etc/wifiSetup.h"
+//#include "etc/wifiSetup.h"
+#include "etc/wifiSetupOb.h"
+
+#ifndef _SYS__STDINT_H
+#include <_stdint.h>
+#endif
 
 //ADC_MODE(ADC_VCC)//todo to read VCC
 //call ESP.getVcc()
@@ -30,7 +35,9 @@ const char* root_ca= \
   "PBA=\n" \
   "-----END CERTIFICATE REQUEST-----\n";
 
-const uint32_t SLEEPTIME = 10e6;
+#ifndef SLEEPTIME
+#define SLEEPTIME (uint32_t)10e6
+#endif
 
 const int httpsPort[] PROGMEM = {443};
 
@@ -43,19 +50,27 @@ const bool debug = true;
 
 void setup(){
 	//turn off wifi until we collect data
-	wifiOff();
+	//wifiOff();
+	uint8_t staticIp[] = {192,168,2,30};
+	uint8_t gateway[] = {192,168,2,1};
+	uint8_t subnet[] = {255,255,255,0};
+
+	espWifi wifi(staticIp, gateway, subnet);
+
 
 	if( debug ){
 		Serial.begin( 74880 );
 		//Serial.setDebugOutput(true);
 		Serial.println( "We are in" );
 	}
-
+/*
 	//Now enable wifi to send data
 	wifiOn();
 	wifiConnect();
-	//Save wifi session in RC
-	writeToRtc();
+	writeWifiToRtc();*/
+	wifi.wifiOn();
+	wifi.wifiConnect();
+	wifi.writeWifiToRtc();
 /*
 	//Already connected to internet
 	char *host = new char[32];
@@ -143,9 +158,8 @@ Serial.println(client.readString());//Mess up whenever the page errors. Look lik
   Serial.println("closing connection");
   Serial.println(client);*/
 
-  WiFi.disconnect( true );
-  delay(1);
-  ESP.deepSleep( SLEEPTIME, WAKE_RF_DISABLED);//TODO deepsleep
+ // wifiOff();
+  ESP.deepSleep( SLEEPTIME, WAKE_RF_DISABLED);
 }
 
 void loop() {

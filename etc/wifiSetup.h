@@ -21,5 +21,5 @@ void wifiConnect();
 bool isRtcValid();
 
 //function to save WiFi session to rtc
-void writeToRtc();
+void writeWifiToRtc();
 

@@ -1,4 +1,4 @@
-#include "wifiSetup.h"
+#include "wifiSetupOb.h"
 
 #ifndef SLEEPTIME
 #define SLEEPTIME (uint32_t)10e6
@@ -7,25 +7,19 @@
 #ifndef STASSID
 #define STASSID "paternal"
 #define STAPSK  "al7rog52hd"
-#endif
 
 const char wSsid[] = STASSID;
 const char wPass[] = STAPSK;
+#endif
 
-IPAddress staticIP(192,168,2,30);
-IPAddress gateway(192,168,2,1);
-IPAddress subnet(255,255,255,0);
 
-//ESP8266 RTC memory is 128 x 32 bit
-//The following data structure utilizes 12 bytes
-struct {
-  uint32_t crc32;   // 4 bytes
-  uint8_t channel;  // 1 byte
-  uint8_t bssid[6]; // 6 bytes
-  uint8_t padding;  // 1 byte
-} rtcData;
 
-void wifiOff(){
+espWifi::espWifi(uint8_t* _staticIP, uint8_t* _gateway, uint8_t* _subnet) : staticIP(_staticIP), gateway(_gateway), subnet(_subnet) {
+	wifiOff();
+};
+
+
+void espWifi::wifiOff(){
 	//discconect and put into modem sleep
 	WiFi.disconnect();
 	WiFi.mode( WIFI_OFF );
@@ -35,7 +29,7 @@ void wifiOff(){
 
 //function to enable wifi,
 //if a previous session is found in the rtc, will attempt to use that
-void wifiOn(){
+void espWifi::wifiOn(){
 	WiFi.forceSleepWake();
 	delay(1);
 	WiFi.persistent( false );
@@ -45,12 +39,12 @@ void wifiOn(){
 	}else{
 		WiFi.begin( wSsid, wPass );
 	}
-	WiFi.config( staticIP, gateway, subnet );
+	//WiFi.config( staticIP, gateway, subnet );
 }
 
 //function to verify WiFi connection
 //if unable to connect to WiFi after 30 seconds, will set device to deepsleep
-void wifiConnect(){
+void espWifi::wifiConnect(){
 	int retries = 0;
 	int wifiStatus = WiFi.status();
 	while( wifiStatus != WL_CONNECTED) {
@@ -77,7 +71,7 @@ void wifiConnect(){
 }
 
 //todo un-hardcode
-void writeWifiToRtc(){
+void espWifi::writeWifiToRtc(){
 	rtcData.channel = WiFi.channel();
 	memcpy( rtcData.bssid, WiFi.BSSID(), 6 );
 	rtcData.crc32 = calculateCRC32( ((uint8_t*)&rtcData) + 4, sizeof( rtcData ) - 4 );
@@ -85,7 +79,7 @@ void writeWifiToRtc(){
 }
 
 //function for calculating the CRC32 checksum
-uint32_t calculateCRC32( const uint8_t *data, size_t length){
+uint32_t espWifi::calculateCRC32( const uint8_t *data, size_t length){
 	uint32_t crc = 0xffffffff;
 	while( length-- ){
 		uint8_t c = *data++;
@@ -106,10 +100,11 @@ uint32_t calculateCRC32( const uint8_t *data, size_t length){
 }
 
 //function to verify rtc checksum
-bool isRtcValid(){
+bool espWifi::isRtcValid(){
 	if( ESP.rtcUserMemoryRead( 0, (uint32_t*)&rtcData, sizeof( rtcData ) ) ){
 		uint32_t crc = calculateCRC32( ((uint8_t*)&rtcData) + 4, sizeof( rtcData ) - 4 );
 		return (bool)( crc == rtcData.crc32 );
 	}
 	return false;
 }
+
