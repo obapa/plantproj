@@ -10,6 +10,7 @@
 #define TEMPC2 2.378405444e-04
 #define TEMPC3 2.019202697e-07
 
+/*
 char* rfFlash (const char *adr){
   //reads string from flash. String must be <=128 bytes
   //Serial.println("rfFlashStart");
@@ -32,11 +33,12 @@ void rfFlash (const char* adr, char* out){
   rfFlash(fHost, temp);
   delete[] temp;
   */
-  for (int k = 0; k < strlen_P(adr); k++) {
+/*  for (int k = 0; k < strlen_P(adr); k++) {
     out[k] = pgm_read_byte_near(adr+k);
   }
 }
 
+*/
 float readTemp(int analogPin){
   /*Equation, analogPin is a voltage from volt divider circuit
   Find R, then use Steinhart-Hart equation to calculate temperature
@@ -59,6 +61,12 @@ float readTemp(int analogPin){
   tempBuf = (tempBuf * 9)/ 5.0 + 32;
   Serial.printf("Temperature: %f, ", tempBuf);
   Serial.println();
+
+  return 0;
+}
+
+void printBytes(unsigned char* pointer, int length){
+
 }
 
 /*

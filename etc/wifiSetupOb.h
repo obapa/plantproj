@@ -1,12 +1,12 @@
+#ifndef wifiSetupOb_h
+#define wifiSetupOb_h
+
 #ifndef WiFi_h
 	#include <ESP8266WiFi.h>
 #endif
 #ifndef wificlientbearssl_h
 	#include <WiFiClientSecure.h>
 #endif
-
-#ifndef wifiSetupOb_h
-#define wifiSetupOb_h
 
 
 class espWifi
@@ -24,7 +24,7 @@ class espWifi
 	  uint8_t padding;  // 1 byte
 	} rtcData;
 public:
-	espWifi(uint8_t* _staticIP, uint8_t* _gateway, uint8_t* _subnet);
+	espWifi( uint8_t* _staticIP, uint8_t* _gateway, uint8_t* _subnet );
 
 	void wifiOff();
 
@@ -34,7 +34,8 @@ public:
 
 	void writeWifiToRtc();
 
-	uint32_t calculateCRC32( const uint8_t *data, size_t length);
+private:
+	uint32_t calculateCRC32( const uint8_t *data, size_t length );
 
 	bool isRtcValid();
 
